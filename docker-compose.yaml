@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  open-appsec-nginx:
+    image: ghcr.io/openappsec/nginx-attachment:latest
+    container_name: open-appsec-nginx
+    volumes:
+      - ./nginxconf:/etc/nginx/conf.d
+      - ./nginxconf/default:/etc/nginx/sites-enabled/default
+    ipc: host
+    ports:
+      - 8081:80
+    restart: unless-stopped
+    depends_on:
+      - open-appsec-agent
+  open-appsec-agent:
+    image: ghcr.io/openappsec/agent:latest
+    container_name: open-appsec-agent
+    ipc: host
+    environment:
+      registered_server: 'NGINX Server'
+      user_email: saintsdertr@gmail.com
+    command: /cp-nano-agent --token cp-ee9cff34-e740-4a70-99b5-c1b295f8a4a1ec3f7fea-fdbf-47da-903c-2fcf3115a3d4
+    restart: unless-stopped
+    depends_on:
+      - app
+  app:
+    build:
+      context: ./app/
+      dockerfile: Dockerfile
+    ports:
+      - 8000:80
+    volumes:
+      - ./app/:/var/www/html/
+    depends_on:
+      - db
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: example
+
+
